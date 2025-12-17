@@ -14,6 +14,14 @@
 	let sessions: any[] = $state([]);
 	let loading = $state(false);
 
+	const loadSession = (session: any) => {
+		ziraat = session.ziraat;
+		isBankasi = session.is_bankasi;
+		garanti = session.garanti;
+		nakit = session.nakit;
+		kasa = session.kasa;
+	};
+
 	// Function to format currency
 	const formatCurrency = (val: number) => {
 		return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0 }).format(val);
@@ -78,17 +86,21 @@
 				<p class="empty-state">Henüz kayıt yok.</p>
 			{/if}
 			{#each sessions as session}
-				<div class="history-item">
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div class="history-item" onclick={() => loadSession(session)}>
 					<div class="history-date">{formatDate(session.created_at)}</div>
 					<div
 						class="history-diff"
 						class:text-red={session.difference !== 0}
 						class:text-green={session.difference === 0}
 					>
-						{#if session.difference === 0}
-							Tam Denk
+						{#if session.difference > 0}
+							Golden Fazla {formatCurrency(session.difference)} ₺
+						{:else if session.difference < 0}
+							Golden Eksik {formatCurrency(session.difference)} ₺
 						{:else}
-							{formatCurrency(session.difference)} ₺ Fark
+							Tam Denk
 						{/if}
 					</div>
 				</div>
@@ -317,7 +329,7 @@
 	.history-item {
 		padding: 10px 15px;
 		border-radius: 20px;
-		cursor: default;
+		cursor: pointer;
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
