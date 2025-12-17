@@ -1,12 +1,12 @@
 <script lang="ts">
-	let ziraat = $state(0);
-	let isBankasi = $state(0);
-	let garanti = $state(0);
-	let nakit = $state(0);
-	let kasa = $state(0);
+	let ziraat: number | null = $state(null);
+	let isBankasi: number | null = $state(null);
+	let garanti: number | null = $state(null);
+	let nakit: number | null = $state(null);
+	let kasa: number | null = $state(null);
 
-	let toplamKasa = $derived(ziraat + isBankasi + garanti + nakit);
-	let kasaEksikFazla = $derived(toplamKasa - kasa);
+	let toplamKasa = $derived((ziraat ?? 0) + (isBankasi ?? 0) + (garanti ?? 0) + (nakit ?? 0));
+	let kasaEksikFazla = $derived(toplamKasa - (kasa ?? 0));
 
 	// Function to format currency
 	const formatCurrency = (val: number) => {
@@ -101,13 +101,11 @@
 					</span>
 					{#if kasaEksikFazla > 0}
 						<span class="note positive-note">
-							Elimizdeki para Golden'dan {formatCurrency(Math.abs(kasaEksikFazla))} TL daha
-							fazla!
+							Elimizdeki para Golden'dan {formatCurrency(Math.abs(kasaEksikFazla))} TL daha fazla!
 						</span>
 					{:else if kasaEksikFazla < 0}
 						<span class="note negative-note">
-							Elimizdeki para Golden'dan {formatCurrency(Math.abs(kasaEksikFazla))} TL daha
-							az!
+							Elimizdeki para Golden'dan {formatCurrency(Math.abs(kasaEksikFazla))} TL daha az!
 						</span>
 					{/if}
 				</div>
