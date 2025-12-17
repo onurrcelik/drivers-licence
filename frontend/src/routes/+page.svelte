@@ -1,0 +1,260 @@
+<script lang="ts">
+	let ziraat = $state(0);
+	let isBankasi = $state(0);
+	let garanti = $state(0);
+	let nakit = $state(0);
+	let kasa = $state(0);
+
+	let toplamKasa = $derived(ziraat + isBankasi + garanti + nakit);
+	let kasaEksikFazla = $derived(toplamKasa - kasa);
+
+	// Function to format currency
+	const formatCurrency = (val: number) => {
+		return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0 }).format(val);
+	};
+</script>
+
+<div class="container">
+	<header>
+		<h1>Sürücü Kursu Kasa Takip</h1>
+	</header>
+
+	<main>
+		<div class="grid">
+			<!-- Input Section -->
+			<div class="card input-group">
+				<h2>Girişler</h2>
+
+				<div class="field">
+					<label for="ziraat">ZİRAAT</label>
+					<input
+						type="number"
+						id="ziraat"
+						bind:value={ziraat}
+						placeholder="0"
+						class="input-money"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="isBankasi">İŞ BANKASI</label>
+					<input
+						type="number"
+						id="isBankasi"
+						bind:value={isBankasi}
+						placeholder="0"
+						class="input-money"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="garanti">GARANTİ</label>
+					<input
+						type="number"
+						id="garanti"
+						bind:value={garanti}
+						placeholder="0"
+						class="input-money"
+					/>
+				</div>
+
+				<div class="field">
+					<label for="nakit">NAKİT PARA</label>
+					<input
+						type="number"
+						id="nakit"
+						bind:value={nakit}
+						placeholder="0"
+						class="input-money highlight-yellow"
+					/>
+				</div>
+
+				<div class="result-row mt-4">
+					<span class="label">TOPLAM PARA</span>
+					<span class="value large red-text">{formatCurrency(toplamKasa)}</span>
+				</div>
+			</div>
+
+			<!-- Golden Section -->
+			<div class="card erp-group">
+				<h2>Golden</h2>
+				<div class="field">
+					<label for="kasa">KASA</label>
+					<input
+						type="number"
+						id="kasa"
+						bind:value={kasa}
+						placeholder="0"
+						class="input-money input-red-text"
+					/>
+				</div>
+
+				<!-- Difference Result -->
+				<div class="result-row mt-4">
+					<span class="label">KASA EKSİK-FAZLA</span>
+					<span
+						class="value large"
+						class:positive={kasaEksikFazla >= 0}
+						class:negative={kasaEksikFazla < 0}
+					>
+						{formatCurrency(kasaEksikFazla)}
+					</span>
+					{#if kasaEksikFazla > 0}
+						<span class="note positive-note">
+							Elimizdeki para Golden'dan {formatCurrency(Math.abs(kasaEksikFazla))} TL daha
+							fazla!
+						</span>
+					{:else if kasaEksikFazla < 0}
+						<span class="note negative-note">
+							Elimizdeki para Golden'dan {formatCurrency(Math.abs(kasaEksikFazla))} TL daha
+							az!
+						</span>
+					{/if}
+				</div>
+			</div>
+		</div>
+	</main>
+</div>
+
+<style>
+	:global(body) {
+		margin: 0;
+		font-family:
+			'Segoe UI',
+			system-ui,
+			-apple-system,
+			sans-serif;
+		background-color: #f0f2f5;
+		color: #333;
+		font-size: 0.9rem; /* Smaller base font */
+	}
+
+	.note {
+		margin-top: 0.5rem;
+		font-size: 0.9rem;
+		font-weight: 500;
+	}
+
+	.positive-note {
+		color: #16a34a;
+	}
+
+	.negative-note {
+		color: #dc2626;
+	}
+
+	.container {
+		max-width: 800px; /* Reduced width */
+		margin: 0 auto;
+		padding: 1rem; /* Reduced padding */
+	}
+
+	header {
+		text-align: center;
+		margin-bottom: 1rem;
+	}
+
+	h1 {
+		font-size: 1.8rem; /* Smaller header */
+		color: #2c3e50;
+		margin: 0;
+	}
+
+	h2 {
+		font-size: 1.1rem;
+		margin-bottom: 1rem;
+		color: #555;
+		border-bottom: 1px solid #eee;
+		padding-bottom: 0.25rem;
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 1rem;
+	}
+
+	.card {
+		background: white;
+		padding: 1.5rem; /* Reduced padding */
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+	}
+
+	.field {
+		margin-bottom: 1rem;
+	}
+
+	label {
+		display: block;
+		font-weight: 600;
+		margin-bottom: 0.25rem;
+		font-size: 0.9rem;
+		color: #444;
+	}
+
+	input.input-money {
+		width: 100%;
+		padding: 0.5rem; /* Smaller padding */
+		font-size: 1.2rem; /* Smaller font */
+		border: 1px solid #ddd;
+		border-radius: 6px;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+	}
+
+	input.input-money:focus {
+		border-color: #3b82f6;
+		outline: none;
+	}
+
+	input.highlight-yellow {
+		background-color: #fffae6;
+	}
+
+	input.input-red-text {
+		color: #dc2626;
+		font-weight: bold;
+	}
+
+	.result-row {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		padding: 0.75rem;
+		background-color: #fafafa;
+		border-radius: 6px;
+	}
+
+	.mt-4 {
+		margin-top: 1rem;
+	}
+
+	.result-row .label {
+		font-weight: bold;
+		font-size: 1rem;
+		color: #666;
+	}
+
+	.result-row .value {
+		font-size: 1.8rem; /* Smaller result font */
+		font-weight: 800;
+		margin-top: 0.25rem;
+		line-height: 1.2;
+	}
+
+	.red-text {
+		color: #dc2626;
+	}
+
+	.positive {
+		color: #16a34a;
+	}
+
+	.negative {
+		color: #dc2626;
+	}
+</style>
