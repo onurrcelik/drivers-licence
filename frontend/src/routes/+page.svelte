@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { supabase } from '$lib/supabase';
+
 	let ziraat: number | null = $state(null);
 	let isBankasi: number | null = $state(null);
 	let garanti: number | null = $state(null);
@@ -8,10 +11,56 @@
 	let toplamKasa = $derived((ziraat ?? 0) + (isBankasi ?? 0) + (garanti ?? 0) + (nakit ?? 0));
 	let kasaEksikFazla = $derived(toplamKasa - (kasa ?? 0));
 
+	let sessions: any[] = $state([]);
+	let loading = $state(false);
+
 	// Function to format currency
 	const formatCurrency = (val: number) => {
 		return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0 }).format(val);
 	};
+
+	const formatDate = (dateString: string) => {
+		return new Date(dateString).toLocaleString('tr-TR', {
+			day: '2-digit',
+			month: '2-digit',
+			year: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+	};
+
+	const fetchSessions = async () => {
+		const { data, error } = await supabase
+			.from('sessions')
+			.select('*')
+			.order('created_at', { ascending: false });
+
+		if (error) console.error('Error fetching sessions:', error);
+		else sessions = data || [];
+	};
+
+	const saveSession = async () => {
+		loading = true;
+		const { error } = await supabase.from('sessions').insert({
+			ziraat: ziraat ?? 0,
+			is_bankasi: isBankasi ?? 0,
+			garanti: garanti ?? 0,
+			nakit: nakit ?? 0,
+			kasa: kasa ?? 0
+		});
+
+		if (error) {
+			alert('Kayıt başarısız: ' + error.message);
+		} else {
+			// alert('Başarıyla kaydedildi!');
+			await fetchSessions();
+		}
+		loading = false;
+	};
+
+	onMount(() => {
+		fetchSessions();
+	});
 </script>
 
 <div class="container">
@@ -109,6 +158,55 @@
 						</span>
 					{/if}
 				</div>
+
+				<!-- Save Button -->
+				<div class="actions mt-4">
+					<button class="btn-save" onclick={saveSession} disabled={loading}>
+						{#if loading}
+							Kaydediliyor...
+						{:else}
+							KAYDET
+						{/if}
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- History Section -->
+		<div class="history-section mt-8">
+			<h2>Geçmiş Kayıtlar</h2>
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Tarih</th>
+							<th>Ziraat</th>
+							<th>İş Bankası</th>
+							<th>Garanti</th>
+							<th>Nakit</th>
+							<th>Kasa</th>
+							<th>Fark</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each sessions as session}
+							<tr>
+								<td>{formatDate(session.created_at)}</td>
+								<td>{formatCurrency(session.ziraat)}</td>
+								<td>{formatCurrency(session.is_bankasi)}</td>
+								<td>{formatCurrency(session.garanti)}</td>
+								<td>{formatCurrency(session.nakit)}</td>
+								<td>{formatCurrency(session.kasa)}</td>
+								<td
+									class:text-green={session.difference >= 0}
+									class:text-red={session.difference < 0}
+								>
+									{formatCurrency(session.difference)}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</main>
@@ -142,7 +240,7 @@
 	}
 
 	.container {
-		max-width: 800px; /* Reduced width */
+		max-width: 900px; /* Slightly wider for table */
 		margin: 0 auto;
 		padding: 1rem; /* Reduced padding */
 	}
@@ -231,6 +329,10 @@
 		margin-top: 1rem;
 	}
 
+	.mt-8 {
+		margin-top: 2rem;
+	}
+
 	.result-row .label {
 		font-weight: bold;
 		font-size: 1rem;
@@ -254,5 +356,75 @@
 
 	.negative {
 		color: #dc2626;
+	}
+
+	/* Button Styles */
+	.btn-save {
+		width: 100%;
+		padding: 0.75rem;
+		background-color: #3b82f6;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		font-size: 1.1rem;
+		font-weight: bold;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.btn-save:hover {
+		background-color: #2563eb;
+	}
+
+	.btn-save:disabled {
+		background-color: #93c5fd;
+		cursor: not-allowed;
+	}
+
+	/* Table Styles */
+	.history-section {
+		background: white;
+		padding: 1.5rem;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	}
+
+	.table-container {
+		overflow-x: auto;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.9rem;
+	}
+
+	th,
+	td {
+		text-align: right;
+		padding: 0.75rem;
+		border-bottom: 1px solid #eee;
+	}
+
+	th {
+		text-align: right;
+		font-weight: 600;
+		color: #555;
+		background-color: #f9fafb;
+	}
+
+	th:first-child,
+	td:first-child {
+		text-align: left;
+	}
+
+	.text-green {
+		color: #16a34a;
+		font-weight: 600;
+	}
+
+	.text-red {
+		color: #dc2626;
+		font-weight: 600;
 	}
 </style>
